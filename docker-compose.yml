@@ -1,0 +1,77 @@
+version: '3.7'
+services:
+  redis:
+      image: redis:latest
+      container_name: redis
+      command:
+         [
+            "redis-server",
+            "--bind",
+            "redis",
+            "--port",
+            "6379",
+            "--databases",
+            "1600"
+         ]
+      volumes:
+         - /var/lib/redis
+      ports:
+         - 6378:6379
+      networks:
+         - live-transcription-network
+  
+  # Docker Container to run NestJS sever for websocket and other backend stuffs
+  nest-server:
+    container_name: nest_server_dev
+    image: nest_server_dev:1.0.1
+    depends_on:
+        - redis
+    build:
+      dockerfile: ./docker/Dockerfile.nest
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    env_file:
+      - .env
+    # Run a command against the development stage of the image
+    command: npm run start:dev
+    ports:
+      - 8080:8080
+    volumes:
+      - live-transcription-content:/usr/src/app
+    networks:
+      - live-transcription-network
+  
+  # Docker container to Run OpenAI Whisper Model
+  audion-transcription:
+    container_name: audio_transcription
+    image: audio_transcription:1.0.0
+    ports:
+      - 5000:5000
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.transcription
+    networks:
+      - live-transcription-network
+    volumes:
+      - live-transcription-content:/usr/src/app
+      - live-transcription-content:/usr/src/app/node_modules
+    restart: unless-stopped
+  
+  angular:
+    build: 
+      context: .
+      dockerfile: ./docker/Dockerfile.angular
+      target: development
+    image: angular
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - 4201:4200
+
+networks:
+  live-transcription-network:
+    driver: bridge
+volumes:
+  live-transcription-content:
