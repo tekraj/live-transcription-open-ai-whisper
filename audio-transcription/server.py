@@ -1,5 +1,7 @@
 from flask import Flask,request
 from flask_cors import CORS
+from TranscribeAudio import TranscribeAudio
+transcribe_audio = TranscribeAudio()
 app = Flask(__name__)
 CORS(app)
 
@@ -11,7 +13,9 @@ def hello():
 def get_transcriptions():
     try:
         data = request.get_json(force=True)
-        return '',200
+        file_path = data['file_path'];
+        transcriptions = transcribe_audio.transcribe(file_path)
+        return transcriptions,200
     except Exception as e:
         print(e)
         return 'test',500

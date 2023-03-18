@@ -9,7 +9,7 @@ class TranscribeAudio:
         self.model = whisper.load_model("small.en",DEVICE)
         self.device = DEVICE
 
-    def transcribe_audio(self,file):
+    def transcribe(self,file):
         try:
             load_audio_file = whisper.load_audio(file)
             trimmed_audio = whisper.pad_or_trim(load_audio_file)

@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Manager, Socket } from 'socket.io-client';
-import { END_TRANSCRIPTION, RECORD_AUDIO, START_TRANSCRIPTION } from 'src/app/data/constants/websocket-commands';
+import { END_TRANSCRIPTION, RECORD_AUDIO, SEND_TRANSCRIPTION, START_TRANSCRIPTION } from 'src/app/data/constants/websocket-commands';
 import { WEB_SOCKET_URL } from 'src/environment/environment';
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService {
   socket?: Socket;
+  private transcriptionsSubject$: Subject<any> = new Subject();
+  transcriptionObservable = this.transcriptionsSubject$.asObservable();
   constructor() {
 
   }
@@ -14,7 +17,7 @@ export class WebsocketService {
   startConnection() {
     const socketManager = new Manager(WEB_SOCKET_URL, {
       query: {
-          sessionId: 'test',
+          clientId: crypto.randomUUID(),
       },
       transports: ['websocket'],
       path: '/audio-transcription',
@@ -25,8 +28,9 @@ export class WebsocketService {
         // authorization: 'JWT-key',
       },
     });
-    this.socket.on('connection',()=>{
-      this.sendCommand(START_TRANSCRIPTION,'start');
+    this.sendCommand(START_TRANSCRIPTION,'start');
+    this.socket.on(SEND_TRANSCRIPTION, (transcriptions) =>{
+      this.transcriptionsSubject$.next(transcriptions);
     });
   }
   endConnection() {

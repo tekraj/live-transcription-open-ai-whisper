@@ -22,7 +22,6 @@ export class AudioService {
   async initializeAudioRecorder() {
     return new Promise(resolve => {
       window.navigator.mediaDevices.getUserMedia(this.audioTrackConstraints).then(mediaDevice => {
-        console.log(mediaDevice);
         this.mediaRecorder = new AudioRecorder(mediaDevice);
         this.mediaRecorder.addEventListener('dataavailable', (e: any) => {
           console.log(e);
